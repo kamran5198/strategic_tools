@@ -1,0 +1,59 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objs as go
+
+
+# Define the web app interface
+st.title('Strategic Management Tools')
+st.subheader('kamran.hameed@umt.edu.pk')
+
+# Internal Factor Evaluation Matrix
+st.header('Internal Factor Evaluation Matrix')
+st.write('Enter the strengths and weaknesses of your organization:')
+strengths = st.text_input('Strength', key='strengths', value='', help='Enter comma-separated values')
+weaknesses = st.text_input('Weaknesses', key='weaknesses', value='', help='Enter comma-separated values')
+
+# Split the inputs into a list
+strengths_list = [s.strip() for s in strengths.split(',')]
+weaknesses_list = [w.strip() for w in weaknesses.split(',')]
+
+# Define the DataFrame for Internal Factor Evaluation Matrix
+internal_data = pd.DataFrame({
+    'Field': ['Strength', 'Weaknesses'],
+    'Text': [strengths_list, weaknesses_list],
+    'Ranking': [[] for i in range(2)],
+    'Weight': [[] for i in range(2)]
+})
+
+# Create columns for each field in Internal Factor Evaluation Matrix
+for i, field in enumerate(internal_data['Field']):
+    st.sidebar.write(field)
+    for j, text in enumerate(internal_data.loc[i, 'Text']):
+        internal_data.loc[i, 'Ranking'].append(st.sidebar.slider(f'{text} - Ranking', 1, 4, 1, key=f'ranking_{i}_{j}'))
+        internal_data.loc[i, 'Weight'].append(st.sidebar.slider(f'{text} - Weight', 0.0, 1.0, 0.0, key=f'weight_{i}_{j}'))
+
+# Calculate the total score for Internal Factor Evaluation Matrix
+internal_data['Total Score'] = internal_data.apply(lambda row: sum([r * w for r, w in zip(row['Ranking'], row['Weight'])]), axis=1)
+
+# Calculate the sum of the Total Score column for Internal Factor Evaluation Matrix
+internal_total_score = internal_data['Total Score'].sum()
+
+# Display the DataFrame and sum of the Total Score column for Internal Factor Evaluation Matrix
+st.write('Internal Factor Evaluation Matrix')
+st.write(internal_data)
+st.write(f"Total Score: {internal_total_score}")
+
+# Compare the total score with the threshold point of 2.5
+if internal_total_score > 2.5:
+    st.write("The company has a strong internal position.")
+else:
+    st.write("The company has a weak internal position.")
+    
+
+# Create a stacked bar chart
+fig = go.Figure(data=[
+    go.Bar(name='Ranking', x=internal_data['Field'], y=internal_data['Ranking']),
+    go.Bar(name='Weight', x=internal_data['Field'], y=internal_data['Weight'])
+])
+fig.update_layout(barmode='stack')
+st.plotly_chart(fig)
